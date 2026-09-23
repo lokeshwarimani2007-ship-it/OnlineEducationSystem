@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Taking Exam - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<form id="exam-form" method="POST" action="{{ url_for('student.submit_exam', attempt_id=attempt.id) }}"
+      data-attempt-id="{{ attempt.id }}"
+      data-remaining-seconds="{{ remaining_seconds }}"
+      data-total-questions="{{ questions|length }}">
+
+
+    <!-- Header info bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h1 style="font-size: 1.6rem;">{{ exam.title }}</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                Question <span id="current-q-num">1</span> of {{ questions|length }} | 
+                Total Points: {{ exam.total_points() }}
+            </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span id="save-indicator" style="font-size: 0.85rem; color: #6ee7b7; font-weight: 500;"></span>
+            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to submit your exam now?')">
+                <i class="fa-solid fa-paper-plane"></i> Submit Exam
+            </button>
+        </div>
+    </div>
+
+    <!-- Exam Main Split View -->
+    <div class="exam-layout">
+        
+        <!-- Left: Question Content Area -->
+        <div class="glass-card" style="min-height: 420px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                {% for q in questions %}
+                    {% set loop_idx = loop.index0 %}
+                    {% set saved_resp = saved_answers.get(q.id) %}
+                    
+                    <div class="question-block" data-question-id="{{ q.id }}" data-index="{{ loop_idx }}" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-card); padding-bottom: 0.8rem;">
+                            <span class="badge badge-info">{{ q.topic }} ({{ q.difficulty|capitalize }})</span>
+                            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                <span style="font-size: 0.85rem; color: var(--text-muted);">Points: {{ q.points }}</span>
+                                <button type="button" class="btn btn-secondary btn-sm btn-flag" data-question-id="{{ q.id }}" data-index="{{ loop_idx }}">
+                                    <i class="fa-solid fa-flag"></i> Flag for Review
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 1.5rem; line-height: 1.5;">
+                            Q{{ loop.index }}. {{ q.text }}
+                        </h3>
+
+                        <!-- Single Choice or True/False -->
+                        {% if q.question_type in ['single_choice', 'true_false'] %}
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                {% for opt in q.options %}
+                                    <label class="option-label">
+                                        <input type="radio" name="q_{{ q.id }}" value="{{ opt }}" 
+                                               {% if saved_resp == opt %}checked{% endif %}>
+                                        <span>{{ opt }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+
+                        <!-- Multi Choice -->
+                        {% elif q.question_type == 'multi_choice' %}
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem;">Select all options that apply:</p>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                {% for opt in q.options %}
+                                    <label class="option-label">
+                                        <input type="checkbox" name="q_{{ q.id }}" value="{{ opt }}"
+                                               {% if saved_resp and opt in saved_resp %}checked{% endif %}>
+                                        <span>{{ opt }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+
+                        <!-- Short Answer -->
+                        {% elif q.question_type == 'short_answer' %}
+                            <div class="form-group">
+                                <label class="form-label">Type your answer below:</label>
+                                <textarea name="q_{{ q.id }}" rows="4" class="form-control" placeholder="Enter answer here...">{{ saved_resp if saved_resp else '' }}</textarea>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Navigation Controls Bottom -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-card); margin-top: 1.5rem; padding-top: 1rem;">
+                <button type="button" id="btn-prev" class="btn btn-secondary">
+                    <i class="fa-solid fa-chevron-left"></i> Previous
+                </button>
+                <button type="button" id="btn-next" class="btn btn-primary">
+                    Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Server Timer & Question Navigator Panel -->
+        <div>
+            <!-- Server Authoritative Timer Box -->
+            <div class="timer-box">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.3rem;">TIME REMAINING</div>
+                <div id="timer-display" class="timer-display">--:--:--</div>
+            </div>
+
+            <!-- Question Navigator Grid -->
+            <div class="glass-card">
+                <h4 style="font-size: 1rem; margin-bottom: 0.8rem;"><i class="fa-solid fa-compass"></i> Question Navigator</h4>
+                <div class="question-nav-grid">
+                    {% for q in questions %}
+                        {% set is_ans = saved_answers.get(q.id) is not none %}
+                        <button type="button" 
+                                class="q-nav-btn {% if is_ans %}answered{% endif %}" 
+                                data-index="{{ loop.index0 }}" 
+                                data-q-id="{{ q.id }}">
+                            {{ loop.index }}
+                        </button>
+                    {% endfor %}
+                </div>
+
+                <div style="margin-top: 1.5rem; font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.4rem; color: var(--text-muted);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="width: 12px; height: 12px; background: rgba(16, 185, 129, 0.4); border: 1px solid #10b981; border-radius: 2px;"></span> Answered
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="width: 12px; height: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-card); border-radius: 2px;"></span> Unanswered
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="width: 12px; height: 12px; border: 1px solid var(--warning); border-radius: 2px; position: relative;">
+                            <span style="position: absolute; top:-2px; right:0; font-size:8px; color:var(--warning)">★</span>
+                        </span> Flagged for Review
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/exam.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const formEl = document.getElementById('exam-form');
+        const attemptId = parseInt(formEl.dataset.attemptId, 10);
+        const remainingSeconds = parseInt(formEl.dataset.remainingSeconds, 10);
+        const totalQuestions = parseInt(formEl.dataset.totalQuestions, 10);
+        
+        window.examCtrl = new ExamController(attemptId, remainingSeconds, totalQuestions);
+    });
+</script>
+{% endblock %}
+

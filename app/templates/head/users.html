@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}User Management & Governance - Head Portal{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem;">
+            <a href="{{ url_for('head.dashboard') }}" style="color: var(--primary); text-decoration: none; font-size: 0.85rem;">
+                <i class="fa-solid fa-arrow-left"></i> Executive Dashboard
+            </a>
+        </div>
+        <h1 style="font-size: 1.8rem; font-weight: 700;">Institutional User Management</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Inspect, promote, and manage student and administrator accounts across the institution.</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.8rem;">
+        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+            Total Registered: {{ total_count }}
+        </span>
+    </div>
+</div>
+
+<!-- Search & Filter Controls -->
+<div class="glass-card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+    <form method="GET" action="{{ url_for('head.users') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">FILTER BY ROLE:</span>
+            <a href="{{ url_for('head.users', role='all', q=search_q) }}" class="btn btn-sm {% if role_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+            <a href="{{ url_for('head.users', role='student', q=search_q) }}" class="btn btn-sm {% if role_filter == 'student' %}btn-primary{% else %}btn-secondary{% endif %}">Students</a>
+            <a href="{{ url_for('head.users', role='admin', q=search_q) }}" class="btn btn-sm {% if role_filter == 'admin' %}btn-primary{% else %}btn-secondary{% endif %}">Admins</a>
+            <a href="{{ url_for('head.users', role='head', q=search_q) }}" class="btn btn-sm {% if role_filter == 'head' %}btn-primary{% else %}btn-secondary{% endif %}">Heads</a>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="hidden" name="role" value="{{ role_filter }}">
+            <input type="text" name="q" value="{{ search_q }}" placeholder="Search by name or email..." class="form-control" style="width: 250px; padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+            <button type="submit" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+            {% if search_q or role_filter != 'all' %}
+                <a href="{{ url_for('head.users') }}" class="btn btn-secondary btn-sm" title="Clear Filters">
+                    <i class="fa-solid fa-xmark"></i> Clear
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="glass-card" style="padding: 0; overflow: hidden;">
+    <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
+        <thead>
+            <tr style="background: rgba(15, 23, 42, 0.7); border-bottom: 1px solid var(--border-color); text-align: left;">
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">ID</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">User Profile</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Role</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Activity</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Registered</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                <td style="padding: 1rem 1.25rem; color: var(--text-muted); font-size: 0.85rem; font-family: monospace;">#{{ u.id }}</td>
+                <td style="padding: 1rem 1.25rem;">
+                    <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                        {{ u.name }}
+                        {% if u.id == current_user.id %}
+                            <span style="font-size: 0.7rem; background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 2px 6px; border-radius: 4px;">You</span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ u.email }}</div>
+                </td>
+                <td style="padding: 1rem 1.25rem;">
+                    {% if u.role == 'head' %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.75rem;">
+                            <i class="fa-solid fa-crown"></i> Head
+                        </span>
+                    {% elif u.role == 'admin' %}
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); font-size: 0.75rem;">
+                            <i class="fa-solid fa-shield-halved"></i> Admin
+                        </span>
+                    {% else %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.75rem;">
+                            <i class="fa-solid fa-user-graduate"></i> Student
+                        </span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem 1.25rem; font-size: 0.85rem; color: var(--text-muted);">
+                    {% if u.role == 'student' %}
+                        <span>{{ u.attempts|length }} exam attempts</span>
+                    {% elif u.role == 'admin' %}
+                        <span>{{ u.exams_created|length }} exams created</span>
+                    {% else %}
+                        <span>Executive Governance</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted);">
+                    {{ u.created_at.strftime('%b %d, %Y') if u.created_at else 'Active' }}
+                </td>
+                <td style="padding: 1rem 1.25rem; text-align: right;">
+                    {% if u.id != current_user.id %}
+                        <div style="display: inline-flex; gap: 0.5rem; align-items: center;">
+                            <!-- Role Switcher Form -->
+                            <form method="POST" action="{{ url_for('head.change_user_role', user_id=u.id) }}" style="display: inline-block;">
+                                <select name="role" onchange="this.form.submit()" class="form-control" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; width: auto; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                                    <option value="student" {% if u.role == 'student' %}selected{% endif %}>Student</option>
+                                    <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                                    <option value="head" {% if u.role == 'head' %}selected{% endif %}>Head</option>
+                                </select>
+                            </form>
+
+                            <!-- Delete User Button with Confirmation Modal -->
+                            <form method="POST" action="{{ url_for('head.delete_user', user_id=u.id) }}" onsubmit="return confirm('WARNING: Are you sure you want to completely remove user {{ u.name }} ({{ u.email }})? All their exam records will be permanently deleted.');" style="display: inline-block;">
+                                <button type="submit" class="btn btn-secondary btn-sm" style="color: #f87171; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1);" title="Remove User Account">
+                                    <i class="fa-solid fa-trash-can"></i> Remove
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Protected Account</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-user-slash" style="font-size: 2rem; margin-bottom: 0.5rem; display: block; opacity: 0.5;"></i>
+                    No users found matching the query or filter criteria.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

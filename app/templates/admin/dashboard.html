@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Online Examination System{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.3rem;">Administrator Control Center</h1>
+    <p style="color: var(--text-muted);">Manage exams, question banks, AI question generators, and system analytics.</p>
+</div>
+
+<!-- Admin Stats Overview Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Total Exams</span>
+        <span class="stat-value">{{ total_exams }} <span style="font-size: 0.9rem; color: #6ee7b7;">({{ published_exams }} Published)</span></span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Question Bank Size</span>
+        <span class="stat-value" style="color: #67e8f9;">{{ total_questions }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Registered Students</span>
+        <span class="stat-value" style="color: #a5b4fc;">{{ total_students }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Student Pass Rate</span>
+        <span class="stat-value" style="color: #fcd34d;">{{ pass_rate }}%</span>
+    </div>
+</div>
+
+<!-- Quick Action Shortcuts -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-bottom: 2.5rem;">
+    <a href="{{ url_for('admin.create_exam') }}" class="glass-card" style="text-decoration: none; color: inherit; text-align: center;">
+        <i class="fa-solid fa-plus-circle" style="font-size: 2rem; color: var(--primary); margin-bottom: 0.8rem;"></i>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.3rem;">Create New Exam</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Configure duration, pass marks & assign questions</p>
+    </a>
+
+    <a href="{{ url_for('admin.add_question') }}" class="glass-card" style="text-decoration: none; color: inherit; text-align: center;">
+        <i class="fa-solid fa-file-circle-plus" style="font-size: 2rem; color: var(--accent); margin-bottom: 0.8rem;"></i>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.3rem;">Add Question</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Create single/multi choice or short answer questions</p>
+    </a>
+
+    <a href="{{ url_for('admin.questions') }}" class="glass-card" style="text-decoration: none; color: inherit; text-align: center;">
+        <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 2rem; color: #a5b4fc; margin-bottom: 0.8rem;"></i>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.3rem;">AI Question Generator</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Auto-generate questions via OpenRouter API</p>
+    </a>
+
+    <a href="{{ url_for('admin.analytics') }}" class="glass-card" style="text-decoration: none; color: inherit; text-align: center;">
+        <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--success); margin-bottom: 0.8rem;"></i>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.3rem;">Performance Analytics</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Item analysis, accuracy rates & student logs</p>
+    </a>
+</div>
+
+<!-- Recent Student Exam Attempts Table -->
+<div>
+    <h2 style="font-size: 1.4rem; margin-bottom: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Recent Student Submissions</h2>
+    {% if recent_attempts %}
+        <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                <thead>
+                    <tr style="background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid var(--border-card);">
+                        <th style="padding: 1rem;">Student</th>
+                        <th style="padding: 1rem;">Exam Title</th>
+                        <th style="padding: 1rem;">Score</th>
+                        <th style="padding: 1rem;">Status</th>
+                        <th style="padding: 1rem;">Date</th>
+                        <th style="padding: 1rem; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attempt in recent_attempts %}
+                        <tr style="border-bottom: 1px solid var(--border-card);">
+                            <td style="padding: 1rem; font-weight: 500;">{{ attempt.user.name }}</td>
+                            <td style="padding: 1rem;">{{ attempt.exam.title }}</td>
+                            <td style="padding: 1rem;">{{ attempt.score }} / {{ attempt.max_score }}</td>
+                            <td style="padding: 1rem;">
+                                {% if attempt.status == 'in_progress' %}
+                                    <span class="badge badge-warning">IN PROGRESS</span>
+                                {% elif attempt.passed %}
+                                    <span class="badge badge-success">PASSED</span>
+                                {% else %}
+                                    <span class="badge badge-danger">FAILED</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1rem; color: var(--text-muted);">
+                                {{ attempt.start_time.strftime('%b %d, %H:%M') }}
+                            </td>
+                            <td style="padding: 1rem; text-align: right;">
+                                <a href="{{ url_for('student.view_result', attempt_id=attempt.id) }}" class="btn btn-secondary btn-sm">
+                                    <i class="fa-solid fa-eye"></i> View Result
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="glass-card" style="text-align: center; padding: 2rem;">
+            <p style="color: var(--text-muted);">No student attempts recorded yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

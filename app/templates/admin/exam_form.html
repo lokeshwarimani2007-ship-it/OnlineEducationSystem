@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Create Exam - OES Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 580px; margin: 2rem auto;">
+    <div class="glass-card">
+        <h2 style="font-size: 1.6rem; margin-bottom: 1.5rem;">Create New Examination</h2>
+
+        <form method="POST" action="{{ url_for('admin.create_exam') }}">
+            <div class="form-group">
+                <label class="form-label" for="title">Exam Title</label>
+                <input type="text" id="title" name="title" class="form-control" placeholder="e.g. Python Fundamentals Final Exam" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description & Instructions</label>
+                <textarea id="description" name="description" rows="3" class="form-control" placeholder="Provide instructions for candidate students..."></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label" for="duration_minutes">Duration (Minutes)</label>
+                    <input type="number" id="duration_minutes" name="duration_minutes" class="form-control" value="30" min="1" max="300" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="pass_mark">Pass Mark (%)</label>
+                    <input type="number" step="1" id="pass_mark" name="pass_mark" class="form-control" value="50" min="1" max="100" required>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; color: var(--text-main);">
+                    <input type="checkbox" name="is_published" value="1" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                    <span>Publish Immediately (Make visible to students)</span>
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+                <a href="{{ url_for('admin.exams') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-arrow-right"></i> Continue to Exam Builder
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

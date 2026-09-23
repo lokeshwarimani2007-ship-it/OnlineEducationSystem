@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Online Examination System{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.3rem;">Student Dashboard</h1>
+    <p style="color: var(--text-muted);">Welcome back, {{ current_user.name }}. View your active exams and performance history.</p>
+</div>
+
+<!-- Performance Summary Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Exams Taken</span>
+        <span class="stat-value">{{ total_taken }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Exams Passed</span>
+        <span class="stat-value" style="color: #6ee7b7;">{{ total_passed }}</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Average Score</span>
+        <span class="stat-value" style="color: #67e8f9;">{{ avg_score }}%</span>
+    </div>
+</div>
+
+<!-- Ongoing In-Progress Attempts (If Any) -->
+{% if in_progress_attempts %}
+<div class="glass-card" style="margin-bottom: 2rem; border-color: rgba(245, 158, 11, 0.4);">
+    <h3 style="color: var(--warning); margin-bottom: 1rem;"><i class="fa-solid fa-clock"></i> Ongoing Exam Session</h3>
+    {% for attempt in in_progress_attempts %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(15, 23, 42, 0.6); border-radius: var(--radius-sm);">
+            <div>
+                <h4 style="font-size: 1.1rem;">{{ attempt.exam.title }}</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                    Started: {{ attempt.start_time.strftime('%Y-%m-%d %H:%M UTC') }}
+                </p>
+            </div>
+            <a href="{{ url_for('student.take_exam', attempt_id=attempt.id) }}" class="btn btn-warning">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Resume Exam
+            </a>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Available Exams Section -->
+<div style="margin-bottom: 2.5rem;">
+    <h2 style="font-size: 1.4rem; margin-bottom: 1rem;"><i class="fa-solid fa-book-open"></i> Available Examinations</h2>
+    {% if available_exams %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.2rem;">
+            {% for exam in available_exams %}
+                <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem;">
+                            <h3 style="font-size: 1.2rem; color: var(--text-main);">{{ exam.title }}</h3>
+                            <span class="badge badge-info">{{ exam.duration_minutes }} mins</span>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                            {{ exam.description or 'No description provided.' }}
+                        </p>
+                        <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.2rem;">
+                            <span><i class="fa-solid fa-circle-question"></i> {{ exam.questions|length }} Questions</span>
+                            <span><i class="fa-solid fa-trophy"></i> Pass: {{ exam.pass_mark }}%</span>
+                        </div>
+                    </div>
+                    <form method="POST" action="{{ url_for('student.start_exam', exam_id=exam.id) }}">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <i class="fa-solid fa-play"></i> Start Exam
+                        </button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-card" style="text-align: center; padding: 2rem;">
+            <p style="color: var(--text-muted);">No published exams are currently available.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Exam Attempt History -->
+<div>
+    <h2 style="font-size: 1.4rem; margin-bottom: 1rem;"><i class="fa-solid fa-history"></i> Performance History</h2>
+    {% if completed_attempts %}
+        <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                <thead>
+                    <tr style="background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid var(--border-card);">
+                        <th style="padding: 1rem;">Exam Title</th>
+                        <th style="padding: 1rem;">Submitted At</th>
+                        <th style="padding: 1rem;">Score</th>
+                        <th style="padding: 1rem;">Status</th>
+                        <th style="padding: 1rem; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attempt in completed_attempts %}
+                        <tr style="border-bottom: 1px solid var(--border-card);">
+                            <td style="padding: 1rem; font-weight: 500;">{{ attempt.exam.title }}</td>
+                            <td style="padding: 1rem; color: var(--text-muted);">
+                                {{ attempt.submitted_at.strftime('%b %d, %Y %H:%M') if attempt.submitted_at else 'N/A' }}
+                            </td>
+                            <td style="padding: 1rem;">
+                                {{ attempt.score }} / {{ attempt.max_score }} 
+                                <span style="color: var(--text-dim); font-size: 0.85rem;">
+                                    ({{ (attempt.score / attempt.max_score * 100)|round(1) if attempt.max_score > 0 else 0 }}%)
+                                </span>
+                            </td>
+                            <td style="padding: 1rem;">
+                                {% if attempt.passed %}
+                                    <span class="badge badge-success">PASSED</span>
+                                {% else %}
+                                    <span class="badge badge-danger">FAILED</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 1rem; text-align: right;">
+                                <a href="{{ url_for('student.view_result', attempt_id=attempt.id) }}" class="btn btn-secondary btn-sm">
+                                    <i class="fa-solid fa-brain"></i> Results & AI Feedback
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="glass-card" style="text-align: center; padding: 2rem;">
+            <p style="color: var(--text-muted);">You haven't completed any exams yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

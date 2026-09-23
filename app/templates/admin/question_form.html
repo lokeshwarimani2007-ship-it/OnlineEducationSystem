@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}{% if question %}Edit Question{% else %}Add Question{% endif %} - OES Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 2rem auto;">
+    <div class="glass-card">
+        <h2 style="font-size: 1.6rem; margin-bottom: 1.5rem;">
+            {% if question %}Edit Question #{{ question.id }}{% else %}Add New Question{% endif %}
+        </h2>
+
+        <form method="POST" action="{% if question %}{{ url_for('admin.edit_question', q_id=question.id) }}{% else %}{{ url_for('admin.add_question') }}{% endif %}">
+            <div class="form-group">
+                <label class="form-label" for="text">Question Text</label>
+                <textarea id="text" name="text" rows="3" class="form-control" placeholder="Enter question description..." required>{% if question %}{{ question.text }}{% endif %}</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label" for="question_type">Question Type</label>
+                    <select id="question_type" name="question_type" class="form-control" onchange="toggleOptionFields()">
+                        <option value="single_choice" {% if question and question.question_type == 'single_choice' %}selected{% endif %}>Single Choice (Radio)</option>
+                        <option value="multi_choice" {% if question and question.question_type == 'multi_choice' %}selected{% endif %}>Multiple Choice (Checkbox)</option>
+                        <option value="true_false" {% if question and question.question_type == 'true_false' %}selected{% endif %}>True / False</option>
+                        <option value="short_answer" {% if question and question.question_type == 'short_answer' %}selected{% endif %}>Short Answer / Descriptive</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="topic">Topic Category</label>
+                    <input type="text" id="topic" name="topic" class="form-control" value="{% if question %}{{ question.topic }}{% else %}General{% endif %}" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label" for="difficulty">Difficulty</label>
+                    <select id="difficulty" name="difficulty" class="form-control">
+                        <option value="easy" {% if question and question.difficulty == 'easy' %}selected{% endif %}>Easy</option>
+                        <option value="medium" {% if not question or question.difficulty == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="hard" {% if question and question.difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="points">Points / Weight</label>
+                    <input type="number" step="0.5" id="points" name="points" class="form-control" value="{% if question %}{{ question.points }}{% else %}1.0{% endif %}" required>
+                </div>
+            </div>
+
+            <!-- Options Section -->
+            <div id="options-container" class="form-group">
+                <label class="form-label">Options (One per input)</label>
+                <div id="options-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {% if question and question.options %}
+                        {% for opt in question.options %}
+                            <input type="text" name="options" class="form-control" value="{{ opt }}">
+                        {% endfor %}
+                    {% else %}
+                        <input type="text" name="options" class="form-control" placeholder="Option 1">
+                        <input type="text" name="options" class="form-control" placeholder="Option 2">
+                        <input type="text" name="options" class="form-control" placeholder="Option 3">
+                        <input type="text" name="options" class="form-control" placeholder="Option 4">
+                    {% endif %}
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addOptionInput()" style="margin-top: 0.5rem;">+ Add Option Line</button>
+            </div>
+
+            <!-- Correct Answers Section -->
+            <div class="form-group">
+                <label class="form-label" for="correct_answers">Correct Answer(s) (Matches option text or key phrase exactly)</label>
+                <input type="text" name="correct_answers" class="form-control" 
+                       value="{% if question %}{{ question.correct_answers|join(', ') }}{% endif %}" 
+                       placeholder="e.g. Option 1 or True" required>
+                <small style="color: var(--text-muted); font-size: 0.8rem;">For multi choice, separate correct answers with commas.</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="explanation">Explanation / Answer Key Notes</label>
+                <textarea id="explanation" name="explanation" rows="2" class="form-control" placeholder="Optional explanation provided to students after grading...">{% if question %}{{ question.explanation }}{% endif %}</textarea>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+                <a href="{{ url_for('admin.questions') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-save"></i> Save Question
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function addOptionInput() {
+        const container = document.getElementById('options-list');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'options';
+        input.className = 'form-control';
+        input.placeholder = `Option ${container.children.length + 1}`;
+        container.appendChild(input);
+    }
+
+    function toggleOptionFields() {
+        const type = document.getElementById('question_type').value;
+        const optContainer = document.getElementById('options-container');
+        if (type === 'short_answer') {
+            optContainer.style.display = 'none';
+        } else {
+            optContainer.style.display = 'block';
+        }
+    }
+    toggleOptionFields();
+</script>
+{% endblock %}

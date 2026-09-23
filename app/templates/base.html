@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ app_title }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="{{ url_for('auth.index') }}" class="navbar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>Online Exam System</span>
+        </a>
+        
+        <ul class="nav-links">
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_head() %}
+                    <li><a href="{{ url_for('head.dashboard') }}" class="nav-link"><i class="fa-solid fa-crown" style="color: #f59e0b;"></i> Executive</a></li>
+                    <li><a href="{{ url_for('head.users') }}" class="nav-link"><i class="fa-solid fa-users-gear" style="color: #60a5fa;"></i> Manage Users</a></li>
+                    <li><a href="{{ url_for('head.audit_log') }}" class="nav-link"><i class="fa-solid fa-shield-halved" style="color: #34d399;"></i> Audit & Proctor</a></li>
+                {% endif %}
+                {% if current_user.is_admin() %}
+                    <li><a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="{{ url_for('admin.exams') }}" class="nav-link"><i class="fa-solid fa-file-signature"></i> Exams</a></li>
+                    <li><a href="{{ url_for('admin.questions') }}" class="nav-link"><i class="fa-solid fa-database"></i> Question Bank</a></li>
+                    <li><a href="{{ url_for('admin.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Analytics</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('student.dashboard') }}" class="nav-link"><i class="fa-solid fa-gauge"></i> My Dashboard</a></li>
+                {% endif %}
+                
+                <li class="user-badge {% if current_user.is_head() %}user-badge-head{% endif %}">
+                    <i class="fa-solid {% if current_user.is_head() %}fa-crown{% else %}fa-user-circle{% endif %}"></i>
+                    {{ current_user.name }} ({{ current_user.role|capitalize }})
+                </li>
+                <li><a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}" class="nav-link">Login</a></li>
+                <li><a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Register</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{{ message }}</span>
+                            <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Online Examination System. Powered by Python, Flask, SQLAlchemy, ChromaDB & OpenRouter AI.</p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

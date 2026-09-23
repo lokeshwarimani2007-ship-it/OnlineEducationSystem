@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Security & Proctoring Audit Log - Head Portal{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem;">
+            <a href="{{ url_for('head.dashboard') }}" style="color: var(--primary); text-decoration: none; font-size: 0.85rem;">
+                <i class="fa-solid fa-arrow-left"></i> Executive Dashboard
+            </a>
+        </div>
+        <h1 style="font-size: 1.8rem; font-weight: 700;">Security & Proctoring Audit Log</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Real-time automated proctoring alerts, tab switches, and integrity infractions recorded during live exams.</p>
+    </div>
+    <div>
+        <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+            <i class="fa-solid fa-shield-halved"></i> Automated Integrity Guardian Active
+        </span>
+    </div>
+</div>
+
+<div class="glass-card" style="padding: 0; overflow: hidden;">
+    <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
+        <thead>
+            <tr style="background: rgba(15, 23, 42, 0.7); border-bottom: 1px solid var(--border-color); text-align: left;">
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Timestamp</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Candidate</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Exam Session</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Incident Type</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Proctoring Details</th>
+                <th style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; text-align: right;">Current Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ev in events %}
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                <td style="padding: 1rem 1.25rem; font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">
+                    {{ ev.timestamp.strftime('%Y-%m-%d %H:%M:%S') if ev.timestamp else 'Recently' }}
+                </td>
+                <td style="padding: 1rem 1.25rem;">
+                    <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">{{ ev.attempt.user.name }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ ev.attempt.user.email }}</div>
+                </td>
+                <td style="padding: 1rem 1.25rem; font-size: 0.85rem;">
+                    <span style="color: #a5b4fc; font-weight: 500;">{{ ev.attempt.exam.title[:30] }}...</span>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Attempt #{{ ev.attempt_id }}</div>
+                </td>
+                <td style="padding: 1rem 1.25rem;">
+                    {% if ev.event_type == 'tab_switch' %}
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Tab Switch
+                        </span>
+                    {% elif ev.event_type == 'window_blur' %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <i class="fa-solid fa-eye-slash"></i> Window Lost Focus
+                        </span>
+                    {% elif ev.event_type == 'copy_attempt' %}
+                        <span class="badge" style="background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3);">
+                            <i class="fa-solid fa-copy"></i> Copy Infraction
+                        </span>
+                    {% else %}
+                        <span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #cbd5e1;">
+                            {{ ev.event_type }}
+                        </span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem 1.25rem; font-size: 0.85rem; color: var(--text-main);">
+                    {{ ev.details }}
+                </td>
+                <td style="padding: 1rem 1.25rem; text-align: right; font-weight: 700; font-family: monospace;">
+                    <span class="{% if (ev.attempt.integrity_score or 100) >= 80 %}text-high{% elif (ev.attempt.integrity_score or 100) >= 60 %}text-mid{% else %}text-low{% endif %}">
+                        {{ ev.attempt.integrity_score or 100 }}%
+                    </span>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-shield-check" style="font-size: 2rem; margin-bottom: 0.5rem; display: block; color: #34d399; opacity: 0.8;"></i>
+                    No integrity infractions logged. All current and recent sessions are operating within security parameters.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# SQLite databases & Chroma local state
+data/oes.db
+data/chroma/
+
+# Testing cache
+.pytest_cache/
+
+# IDE files
+.vscode/
+.idea/
+
+# Word reports (optional)
+*.docx

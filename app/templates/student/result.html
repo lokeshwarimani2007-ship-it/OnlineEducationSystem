@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Results - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="font-size: 2rem;">Results & Performance Breakdown</h1>
+        <p style="color: var(--text-muted);">Exam: {{ exam.title }}</p>
+    </div>
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<!-- Score Card Header -->
+<div class="glass-card {% if attempt.passed %}card-passed{% else %}card-failed{% endif %}" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+        <div>
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.3rem;">FINAL SCORE</div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 2.5rem; font-weight: 700; color: var(--text-main);">
+                {{ attempt.score }} <span style="font-size: 1.2rem; color: var(--text-muted);">/ {{ attempt.max_score }} pts</span>
+            </div>
+            <div class="{% if attempt.passed %}text-passed{% else %}text-failed{% endif %}" style="font-size: 1.1rem; font-weight: 600; margin-top: 0.2rem;">
+                {{ score_percentage|round(1) }}% (Pass Threshold: {{ exam.pass_mark }}%)
+            </div>
+            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-shield-halved {% if (attempt.integrity_score or 100) >= 80 %}text-high{% else %}text-low{% endif %}"></i>
+                Session Integrity Rating: <strong style="color: var(--text-main);">{{ attempt.integrity_score or 100 }}%</strong>
+            </div>
+        </div>
+
+        <div>
+            {% if attempt.passed %}
+                <div style="text-align: center; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 1.2rem 2.5rem; border-radius: var(--radius-md);">
+                    <i class="fa-solid fa-circle-check" style="font-size: 2.5rem; color: #6ee7b7; margin-bottom: 0.5rem;"></i>
+                    <h3 style="color: #6ee7b7; font-size: 1.4rem; margin-bottom: 0.5rem;">PASSED</h3>
+                    <a href="{{ url_for('student.view_certificate', attempt_id=attempt.id) }}" target="_blank" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.9rem; background: linear-gradient(135deg, #10b981, #059669); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-certificate"></i> View Certificate
+                    </a>
+                </div>
+            {% else %}
+                <div style="text-align: center; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); padding: 1.2rem 2.5rem; border-radius: var(--radius-md);">
+                    <i class="fa-solid fa-circle-xmark" style="font-size: 2.5rem; color: #fca5a5; margin-bottom: 0.5rem;"></i>
+                    <h3 style="color: #fca5a5; font-size: 1.4rem;">NEEDS IMPROVEMENT</h3>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- OpenRouter AI Personalized Feedback Section -->
+<div class="glass-card" style="margin-bottom: 2.5rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(6, 182, 212, 0.12)); border-color: rgba(99, 102, 241, 0.4);">
+    <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-card); padding-bottom: 0.8rem;">
+        <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 1.4rem; color: #a5b4fc;"></i>
+        <h2 style="font-size: 1.4rem; color: #a5b4fc;">AI Tutor Performance Analysis</h2>
+    </div>
+
+    <p style="font-size: 1.05rem; line-height: 1.6; margin-bottom: 1.5rem; color: var(--text-main);">
+        {{ ai_feedback.summary }}
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+        <!-- Key Strengths -->
+        <div style="background: rgba(15, 23, 42, 0.5); padding: 1.2rem; border-radius: var(--radius-sm); border: 1px solid rgba(16, 185, 129, 0.2);">
+            <h4 style="color: #6ee7b7; margin-bottom: 0.8rem; font-size: 1rem;"><i class="fa-solid fa-thumbs-up"></i> Key Strengths</h4>
+            <ul style="padding-left: 1.2rem; color: var(--text-muted); font-size: 0.95rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                {% for item in ai_feedback.strengths %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Areas for Improvement -->
+        <div style="background: rgba(15, 23, 42, 0.5); padding: 1.2rem; border-radius: var(--radius-sm); border: 1px solid rgba(245, 158, 11, 0.2);">
+            <h4 style="color: #fcd34d; margin-bottom: 0.8rem; font-size: 1rem;"><i class="fa-solid fa-lightbulb"></i> Areas to Focus On</h4>
+            <ul style="padding-left: 1.2rem; color: var(--text-muted); font-size: 0.95rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                {% for item in ai_feedback.improvements %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Recommended Study Topics -->
+        <div style="background: rgba(15, 23, 42, 0.5); padding: 1.2rem; border-radius: var(--radius-sm); border: 1px solid rgba(6, 182, 212, 0.2);">
+            <h4 style="color: #67e8f9; margin-bottom: 0.8rem; font-size: 1rem;"><i class="fa-solid fa-book"></i> Recommended Topics</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                {% for topic in ai_feedback.recommended_topics %}
+                    <span class="badge badge-info">{{ topic }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Per-Question Analysis -->
+<div>
+    <h2 style="font-size: 1.4rem; margin-bottom: 1rem;"><i class="fa-solid fa-list-check"></i> Question Breakdown</h2>
+    
+    <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+        {% for q in questions %}
+            {% set ans = answers_map.get(q.id) %}
+            <div class="glass-card {% if ans and ans.is_correct %}q-card-correct{% else %}q-card-incorrect{% endif %}">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem;">
+                    <span style="font-weight: 600; color: var(--text-muted);">Q{{ loop.index }}. {{ q.topic }}</span>
+                    <div>
+                        {% if ans and ans.is_correct %}
+                            <span class="badge badge-success"><i class="fa-solid fa-check"></i> Correct (+{{ ans.points_awarded }} pts)</span>
+                        {% else %}
+                            <span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> Incorrect ({{ ans.points_awarded if ans else 0 }} pts)</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">{{ q.text }}</h3>
+
+                <div style="background: rgba(15, 23, 42, 0.5); padding: 0.9rem 1.1rem; border-radius: var(--radius-sm); font-size: 0.95rem; margin-bottom: 0.8rem;">
+                    <div style="margin-bottom: 0.4rem;">
+                        <strong style="color: var(--text-muted);">Your Response:</strong> 
+                        <span class="{% if ans and ans.is_correct %}text-passed{% else %}text-failed{% endif %}" style="font-weight: 500;">
+                            {{ ans.student_response if ans and ans.student_response else 'No answer provided' }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <strong style="color: var(--text-muted);">Correct Answer:</strong> 
+                        <span style="color: #6ee7b7; font-weight: 500;">{{ q.correct_answers|join(', ') }}</span>
+                    </div>
+                </div>
+
+                {% if ans and ans.ai_feedback %}
+                    <div style="font-size: 0.9rem; color: #a5b4fc; font-style: italic;">
+                        <i class="fa-solid fa-info-circle"></i> {{ ans.ai_feedback }}
+                    </div>
+                {% endif %}
+
+                {% if q.explanation %}
+                    <div style="margin-top: 0.6rem; font-size: 0.9rem; color: var(--text-dim);">
+                        <strong>Explanation:</strong> {{ q.explanation }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

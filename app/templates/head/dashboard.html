@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Command Center - Head of Examinations{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem;">
+            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.75rem; padding: 0.25rem 0.6rem;">
+                <i class="fa-solid fa-crown"></i> Head of Examination Portal
+            </span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">System Governance & Integrity</span>
+        </div>
+        <h1 style="font-size: 1.9rem; font-weight: 700;">Executive Command Center</h1>
+    </div>
+    <div style="display: flex; gap: 0.8rem;">
+        <a href="{{ url_for('head.users') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+            <i class="fa-solid fa-users-gear"></i> Manage User Accounts
+        </a>
+        <a href="{{ url_for('head.audit_log') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-shield-halved"></i> Security Audit Log
+        </a>
+    </div>
+</div>
+
+<!-- Executive Metric Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
+    <div class="glass-card" style="border-left: 4px solid #6366f1;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Total Users</div>
+        <div style="font-size: 2.2rem; font-weight: 700; margin: 0.4rem 0; font-family: 'Outfit', sans-serif;">{{ total_users }}</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+            <span style="color: #60a5fa;">{{ total_students }} Students</span> | <span style="color: #a78bfa;">{{ total_admins }} Admins</span>
+        </div>
+    </div>
+
+    <div class="glass-card" style="border-left: 4px solid #10b981;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Institution Pass Rate</div>
+        <div style="font-size: 2.2rem; font-weight: 700; margin: 0.4rem 0; font-family: 'Outfit', sans-serif; color: #6ee7b7;">{{ pass_rate|round(1) }}%</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Out of {{ total_attempts }} completed exams</div>
+    </div>
+
+    <div class="glass-card" style="border-left: 4px solid #f59e0b;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Published Curricula</div>
+        <div style="font-size: 2.2rem; font-weight: 700; margin: 0.4rem 0; font-family: 'Outfit', sans-serif;">{{ published_exams }} <span style="font-size: 1.1rem; color: var(--text-muted);">/ {{ total_exams }}</span></div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Live examination modules</div>
+    </div>
+
+    <div class="glass-card" style="border-left: 4px solid #ef4444;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Proctoring Incident Flags</div>
+        <div style="font-size: 2.2rem; font-weight: 700; margin: 0.4rem 0; font-family: 'Outfit', sans-serif; color: #f87171;">{{ total_integrity_flags }}</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Tab switches & blur alerts</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <!-- Recent User Registrations -->
+    <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-card); padding-bottom: 0.8rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 600;"><i class="fa-solid fa-user-plus" style="color: #60a5fa;"></i> Recently Registered Users</h3>
+            <a href="{{ url_for('head.users') }}" style="font-size: 0.8rem; color: var(--primary); text-decoration: none;">View All &rarr;</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+            {% for u in recent_users %}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">{{ u.name }}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">{{ u.email }}</div>
+                    </div>
+                    <div>
+                        {% if u.role == 'head' %}
+                            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">Head</span>
+                        {% elif u.role == 'admin' %}
+                            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4);">Admin</span>
+                        {% else %}
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4);">Student</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Examination Sessions -->
+    <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-card); padding-bottom: 0.8rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 600;"><i class="fa-solid fa-clock-rotate-left" style="color: #a78bfa;"></i> Live & Recent Attempts</h3>
+            <a href="{{ url_for('head.audit_log') }}" style="font-size: 0.8rem; color: var(--primary); text-decoration: none;">Audit Log &rarr;</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+            {% for a in recent_attempts %}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">{{ a.user.name }}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">{{ a.exam.title[:32] }}...</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div>
+                            {% if a.status == 'in_progress' %}
+                                <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">In Progress</span>
+                            {% elif a.passed %}
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7;">Passed ({{ a.score }} pts)</span>
+                            {% else %}
+                                <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Failed ({{ a.score }} pts)</span>
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                            Integrity: {{ a.integrity_score or 100 }}%
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); font-size: 0.9rem;">No examination attempts recorded yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

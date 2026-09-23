@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Builder - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h1 style="font-size: 1.8rem;">Exam Builder: {{ exam.title }}</h1>
+        <p style="color: var(--text-muted);">Select questions from the question bank to include in this exam.</p>
+    </div>
+    <div style="display: flex; gap: 0.8rem;">
+        <a href="{{ url_for('admin.exams') }}" class="btn btn-secondary">Done</a>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('admin.exam_builder', exam_id=exam.id) }}">
+    <div class="glass-card" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <span style="font-size: 1.1rem; font-weight: 600;">Assigned Questions: <span id="assigned-count" style="color: #67e8f9;">{{ assigned_questions|length }}</span></span>
+            <span style="margin: 0 1rem; color: var(--border-card);">|</span>
+            <span style="font-size: 1.1rem; font-weight: 600;">Total Exam Points: <span style="color: #6ee7b7;">{{ exam.total_points() }}</span></span>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-save"></i> Save Question Assignments
+        </button>
+    </div>
+
+    <!-- Available Questions Selection Table -->
+    {% if all_bank_questions %}
+        <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                <thead>
+                    <tr style="background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid var(--border-card);">
+                        <th style="padding: 1rem; width: 50px;">Select</th>
+                        <th style="padding: 1rem;">Question Text</th>
+                        <th style="padding: 1rem;">Topic</th>
+                        <th style="padding: 1rem;">Difficulty</th>
+                        <th style="padding: 1rem;">Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for q in all_bank_questions %}
+                        {% set is_assigned = q.id in assigned_ids %}
+                        <tr class="{% if is_assigned %}row-assigned{% endif %}" style="border-bottom: 1px solid var(--border-card);">
+
+                            <td style="padding: 1rem; text-align: center;">
+                                <input type="checkbox" name="question_ids" value="{{ q.id }}" 
+                                       {% if is_assigned %}checked{% endif %}
+                                       style="width: 18px; height: 18px; accent-color: var(--primary);">
+                            </td>
+                            <td style="padding: 1rem; font-weight: 500;">{{ q.text }}</td>
+                            <td style="padding: 1rem;"><span class="badge badge-info">{{ q.topic }}</span></td>
+                            <td style="padding: 1rem;">{{ q.difficulty|capitalize }}</td>
+                            <td style="padding: 1rem;">{{ q.points }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="glass-card" style="text-align: center; padding: 3rem;">
+            <p style="color: var(--text-muted);">No questions available in bank. Please add questions first.</p>
+        </div>
+    {% endif %}
+</form>
+{% endblock %}
